@@ -1,0 +1,91 @@
+# =============================================================================
+#   NI 43-101 资源量抽取与对抗审核 —— 全项目唯一需要手动填写的文件
+# =============================================================================
+#
+#   ★★★★★  填 写 区  ★★★★★
+#
+#   本文件一共只有 2 处需要你填，每处 2 个值（共 4 个值）：
+#
+#       [填写点 1 / 2]   extractor.api_key  +  extractor.base_url
+#       [填写点 2 / 2]   critic.api_key     +  critic.base_url
+#
+#   在编辑器里直接搜索中文关键词「填写点」即可逐个跳转。
+#   model 字段已给好默认值；若你用的服务商模型名不同，改 model 即可。
+#
+#   ---------------------------------------------------------------------
+#   两种填写方式，任选其一：
+#
+#   (A) 直接写在下面的填写点里（最省事）
+#
+#   (B) 用环境变量覆盖（优先级更高，适合不想把 key 落到文件里）
+#         NI101_EXTRACTOR_API_KEY / NI101_EXTRACTOR_BASE_URL
+#         NI101_CRITIC_API_KEY    / NI101_CRITIC_BASE_URL
+#         PowerShell 示例：
+#           $env:NI101_EXTRACTOR_API_KEY="sk-xxx"
+#           $env:NI101_EXTRACTOR_BASE_URL="https://api.deepseek.com/v1"
+#   ---------------------------------------------------------------------
+#   base_url 必须带服务商要求的版本前缀（多数是 /v1）。常见取值：
+#
+#         DeepSeek        https://api.deepseek.com/v1
+#         OpenAI          https://api.openai.com/v1
+#         通义千问 Qwen    https://dashscope.aliyuncs.com/compatible-mode/v1
+#         智谱 GLM        https://open.bigmodel.cn/api/paas/v4
+#         月之暗面 Kimi    https://api.moonshot.cn/v1
+#         本地 Ollama     http://localhost:11434/v1   (api_key 随便填 ollama)
+#
+#   ---------------------------------------------------------------------
+#   留空会怎样？
+#     留空 = 自动降级为「规则抽取 + 规则审核」模式。整条链路依然可以跑通，
+#     你会拿到一份真实（不是编造）的结果，只是抽取质量明显不如真模型。
+#     这是刻意设计：让你在配 key 之前就能先验证工程结构是否正确。
+#     配置是否真的生效，用 `python scripts/check_llm.py` 自检，别靠猜。
+# =============================================================================
+
+
+# =========================== ★ 填写点 1 / 2 ★ ===========================
+extractor:                                # Extractor Agent —— 负责从 PDF 抽取
+  api_key: ""                             # <== 填这里：Extractor 的 API Key
+  base_url: ""                            # <== 填这里：Extractor 的 base_url
+  model: "deepseek-chat"                  # 强模型，建议 GPT-4o / Claude / DeepSeek
+  temperature: 0.0
+  max_tokens: 8192
+  timeout_s: 180
+# =========================================================================
+
+
+# =========================== ★ 填写点 2 / 2 ★ ===========================
+critic:                                   # CriticMaster Agent —— 负责挑刺打分
+  api_key: ""                             # <== 填这里：Critic 的 API Key
+  base_url: ""                            # <== 填这里：Critic 的 base_url
+  model: "qwen-plus"                      # 必须换一个模型，与 Extractor 不同厂商
+  temperature: 0.0                        # 建议 Qwen / GLM；保持低温度以便稳定打分
+  max_tokens: 4096
+  timeout_s: 180
+# =========================================================================
+
+
+# -----------------------------------------------------------------------------
+#  以下是评分协议与流程参数，默认值已按题目要求设好，一般不用动。
+# -----------------------------------------------------------------------------
+pipeline:
+  max_rounds: 3                # Revise Loop 最大轮次（题目要求 <= 3）
+  pass_score: 8.0              # CriticMaster 评分 >= 8 才通过（题目要求）
+  value_tolerance: 0.05        # 评分协议：字段级容差 ±5%
+
+  # 三角一致性：吨位 x 品位 应当约等于金属量。偏差超过下面的阈值即视为异常。
+  consistency_tolerance: 0.15  # 超过 15%  -> Critic 记为 critical 问题
+  consistency_hard_fail: 0.35  # 超过 35%  -> 直接 hard abstain，不允许"硬给"
+
+  # 自评门槛：未拒答的文档，字段准确率低于该值即判定为"硬给"（最严重情形）
+  min_field_accuracy_to_pass: 0.80
+
+  few_shot_limit: 3            # Evolution Log 回放时最多注入几条失败案例
+
+paths:
+  pdf_dir: "data/pdfs"
+  ground_truth_dir: "data/ground_truth"
+  output_dir: "outputs"
+
+runtime:
+  log_level: "info"            # info | debug
+  request_retries: 2           # 单次 LLM 调用失败后的重试次数

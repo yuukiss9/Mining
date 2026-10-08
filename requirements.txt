@@ -1,0 +1,24 @@
+# 运行本工程所需的第三方依赖
+#
+# 环境要求：Python >= 3.10（代码使用了 PEP 604 的 `X | None` 联合类型）
+#
+# 安装：
+#     python -m venv .venv
+#     .venv\Scripts\activate        # Windows
+#     source .venv/bin/activate     # macOS / Linux
+#     pip install -r requirements.txt
+#
+# 说明：不需要配置任何 API Key 即可跑通全流程（未配置时走确定性规则降级路径）。
+
+pdfplumber>=0.11.0      # PDF 文本 + 表格结构抽取（主力）
+pymupdf>=1.24.0         # PDF 文本兜底 + 演示数据生成（import fitz）
+pypdf>=4.0.0            # 极端情况下的纯文本兜底
+
+pydantic>=2.7.0         # 领域模型与校验
+PyYAML>=6.0.0           # config.yaml 加载
+
+openai>=1.30.0          # OpenAI 兼容客户端（DeepSeek/Qwen/GLM/OpenAI 通用）
+tenacity>=8.2.0         # 请求重试
+
+rich>=13.7.0            # 终端报告
+pytest>=8.0.0           # 单元测试

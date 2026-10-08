@@ -1,0 +1,28 @@
+# 运行产物
+outputs/
+
+# 真实数据不进版本库（题目给的 PDF 与 ground truth 自行保管）
+data/pdfs/*.pdf
+data/ground_truth/*.json
+
+# 但保留目录结构与说明
+!data/pdfs/README.md
+!data/ground_truth/README.md
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+
+# 编辑器
+.idea/
+.vscode/
+*.swp
+
+# 密钥：环境变量优先，不要提交任何含真实 key 的副本
+.env
+.env.local
+config.local.yaml
