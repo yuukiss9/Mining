@@ -1,0 +1,49 @@
+name: tests
+
+# 在 GitHub 的干净机器上从零复现：装依赖 -> 播种演示数据 -> 跑批 -> 自检 -> 单测
+# 目的：不依赖任何 API Key，也不依赖本机环境，证明仓库克隆下来即可运行
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  reproduce:
+    name: pytest (python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 3.10 是 requirements.txt 声明的下限，3.13 是当前开发版本
+        python-version: ["3.10", "3.13"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: 安装依赖
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: 播种演示数据（3 份合成 NI 43-101 + ground truth）
+        run: python scripts/make_demo_data.py
+
+      - name: 体检 PDF 文本层
+        run: python scripts/pdf_health.py
+        continue-on-error: true
+
+      - name: 端到端跑批（未配置模型，走确定性规则路径）
+        run: python run_pipeline.py --quiet
+
+      - name: 端到端自检（退出码 = 失败项数）
+        run: python scripts/smoke_check.py
+
+      - name: 单元测试
+        run: python -m pytest -q

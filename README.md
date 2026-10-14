@@ -1,5 +1,8 @@
 # NI 43-101 资源量抽取 + 对抗审核
 
+[![tests](https://github.com/yuukiss9/Mining/actions/workflows/tests.yml/badge.svg)](https://github.com/yuukiss9/Mining/actions/workflows/tests.yml)
+![python](https://img.shields.io/badge/python-3.10%2B-blue)
+
 从 NI 43-101 矿权报告 PDF 中自动抽取 Indicated / Inferred Resources 的
 **矿石量 (Mt) · 品位 (g/t Au 或 % Cu) · 金属量 (oz 或 t)**，
 并由第二个模型做对抗性审核、迭代返工，**在无法确证时拒答而不是硬给**。
